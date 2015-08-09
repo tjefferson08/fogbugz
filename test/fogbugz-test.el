@@ -38,6 +38,25 @@
     (let ((fogbugz-token "already-set"))
       (should (equal (fogbugz-logon) "already-set")))))
 
+(ert-deftest fogbugz-request-test ()
+  (with-mock
+    (let ((xml-buffer (generate-new-buffer "mock-xml-buffer"))
+
+          ;; fake headers end at char 13 in xml data
+          (url-http-end-of-headers 13))
+
+      (save-excursion
+        (switch-to-buffer xml-buffer)
+        (insert "FAKE HEADERS<?xml version=\"1.0\" encoding=\"UTF-8\"?><response><data>123</data></response>"))
+
+      (mock (url-retrieve-synchronously "<mock url>") => xml-buffer)
+      (mock (fogbugz-base-uri "endpoint-name") => "<mock url>")
+      (should (equal
+               (fogbugz-request "endpoint-name" `(("param1" . "value1") ("param2" . "value2")))
+
+               ;; mock xml parsed into lisp object
+               '(response nil (data nil "123")))))))
+
 (defun run-tests ()
   (interactive)
   (shell-command

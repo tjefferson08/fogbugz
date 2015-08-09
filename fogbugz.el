@@ -43,7 +43,7 @@
   "Make a request to ENDPOINT, providing PARAMS (which can be
   nil) as POST data. Respond synchronously with parsed XML data
   from `libxml-parse-xml-region'"
-  (message "request!")
+
   (let ((url-request-method "POST")
         (url-request-extra-headers
          '(("Content-Type" . "application/x-www-form-urlencoded")))
@@ -63,9 +63,18 @@
 
         (message "URL: %s" url)
         (switch-to-buffer (url-retrieve-synchronously url))
+
+        ;; special marker set by `url-retrieve-synchronously'
+        (goto-char url-http-end-of-headers)
+
+        ;; move past any blank lines
+        (while (looking-at "^\\s-*$")
+          (forward-line 1))
+
         (let ((data (libxml-parse-xml-region (point) (point-max))))
           (kill-buffer)
           data)))
+
 ;; (setq url-debug t)
 
 (defun fogbugz-parse-list-filters-response (response)
@@ -118,17 +127,6 @@ sFilter ID."
 
 (defun fogbugz-set-current-filter (s-filter)
   "Set S-FILTER (tring) as current filter in fogbugz."
-  ;; (let ((s-filter-string
-  ;;     (cond
-  ;;      ((numberp s-filter)
-  ;;       (message "number")
-  ;;       (number-to-string s-filter))
-  ;;      ((integerp s-filter)
-  ;;       (message "int")
-  ;;       (int-to-string s-filter))
-  ;;      ((stringp s-filter)
-  ;;       (message "string"))
-  ;;      (t (message "else"))))))
 
   (pp
    (fogbugz-request "setCurrentFilter" `(("token" . ,fogbugz-token)
