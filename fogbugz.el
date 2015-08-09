@@ -153,4 +153,4 @@ sFilter ID."
                        (status . "current"))
                       "Travis's Bugz"))
 
-(provide 'fogbugz-mode)
+(provide 'fogbugz)

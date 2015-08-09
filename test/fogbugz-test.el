@@ -1,4 +1,4 @@
-(require 'fogbugz-mode)
+(require 'fogbugz)
 (require 'el-mock)
 (require 'cl)
 
