@@ -57,6 +57,11 @@
                ;; mock xml parsed into lisp object
                '(response nil (data nil "123")))))))
 
+(ert-deftest fogbugz-humanize-attribute-name-test ()
+  (should (equal
+           (fogbugz-humanize-attribute-name 'lowercasetypeCamelCaseAttribute)
+           "CamelCaseAttribute")))
+
 (defun run-tests ()
   (interactive)
   (shell-command

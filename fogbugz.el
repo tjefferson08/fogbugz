@@ -96,18 +96,21 @@
           (fogbugz-request
            "listFilters"
            `(("token" . ,fogbugz-token))))))
+
+    ;; store filter list in a variable for easy access
     (setq fogbugz-filter-list filter-list))
+
   (switch-to-buffer "*fogbugz-filters-list*")
   (read-only-mode -1)
   (erase-buffer)
   (loop for filter in fogbugz-filter-list do
-        (insert (assoc-default 'sFilter (fogbugz-get-filter-attributes filter)) " - ")
         (insert (if (equal
                      (assoc-default 'status (fogbugz-get-filter-attributes filter))
                      "current")
                     "* "
                   "")) ;; mark currently active filter
         (insert (fogbugz-get-filter-name filter)) ;; insert filter name (string)
+        (insert " - " (assoc-default 'sFilter (fogbugz-get-filter-attributes filter)))
         (insert "\n"))
   (fogbugz-filter-list-mode))
 
@@ -128,11 +131,92 @@ sFilter ID."
 (defun fogbugz-set-current-filter (s-filter)
   "Set S-FILTER (tring) as current filter in fogbugz."
 
-  (pp
-   (fogbugz-request "setCurrentFilter" `(("token" . ,fogbugz-token)
-                                         ("sFilter" . ,s-filter)))))
+  (fogbugz-request "setCurrentFilter" `(("token" . ,fogbugz-token)
+                                        ("sFilter" . ,s-filter))))
+
+(defun fogbugz-search (&optional query column-names max)
+  (interactive)
+
+  ;; parse off top-level <response> tag
+  (cdr
+   (cdr
+    (fogbugz-request
+     "search"
+     `(("token" . ,fogbugz-token)
+       ("q" . ,(or query ""))
+       ("cols" . "sTitle,sPriority,sStatus,sProject,sLatestTextSummary")
+       ("max" . "50"))))))
+
+(defun fogbugz-list-search-results (search-results &optional results-buffer)
+  (let ((target-buffer (or
+                        results-buffer
+                        (get-buffer-create "*fogbugz-search-results*")))
+        (description (nth 2 (car search-results)))
+        (case-list (cdr (cdr (nth 2 search-results)))))
+    (switch-to-buffer target-buffer)
+    (read-only-mode -1)
+    (erase-buffer)
+    (goto-char (point-min))
+    (insert "* " description  " *\n\n")
+    (pp case-list)
+    (loop for case in case-list do
+          (let ((case-attrs (nth 1 case))
+                (remaining-fields (cdr (cdr case))))
+
+            (insert (assoc-default 'ixBug case-attrs) "\n")
+            (loop for field in remaining-fields do
+                  (insert (fogbugz-humanize-attribute-name (nth 0 field)) ": ")
+                  (insert (or (nth 2 field) "") "\n"))
+            (insert "\n"))))
+  (fogbugz-search-results-mode)
+  (goto-char (point-min)))
+
+(defun fogbugz-select-filter-under-point ()
+
+  (interactive)
+  (let* ((index (1- (line-number-at-pos)))
+         (filter-to-activate (nth index fogbugz-filter-list))
+         (s-filter-to-activate (assoc-default 'sFilter (nth 1 filter-to-activate))))
+    (message "activating filter %s with sFilter %s"
+             (fogbugz-get-filter-name filter-to-activate)
+             s-filter-to-activate)
+    (fogbugz-set-current-filter s-filter-to-activate)
+    (fogbugz-list-search-results
+     (fogbugz-search))))
+
+(defun fogbugz-start-work-on-case (&optional ix-bug)
+  "Beware: creates a new interval"
+  (interactive)
+
+  (let ((bug-id (or ix-bug
+                    (read-from-minibuffer "Bug: "))))
+    (save-excursion
+      (message "bug id %s" bug-id)
+      (pp (fogbugz-request "startWork" `(("ixBug" . ,bug-id) ("token" . ,fogbugz-token)))))))
 
 
+(defun fogbugz-work-on-case-under-point ()
+  (interactive)
+  (save-excursion
+    (let* ((line (buffer-substring-no-properties (point-at-bol) (point-at-eol)))
+          (case-number
+           (match-string
+            (string-match "^[ ]*\\([0-9]+\\)[ ]*" line)
+            line)))
+      (fogbugz-start-work-on-case case-number))))
+
+(defun fogbugz-stop-work ()
+  (interactive)
+  )
+
+(defun fogbugz-humanize-attribute-name (attribute-symbol)
+  "Translates ATTRIBUTE-SYMBOL for human consumption:
+E.g. (fogbugz-humanize-attribute-name 'ixBug) ;; => \"Bug\""
+
+  (let ((name (symbol-name attribute-symbol))
+        (case-fold-search nil))
+    (substring name
+        (string-match "[A-Z]" name))))
 
 (define-derived-mode fogbugz-filter-list-mode fundamental-mode "fbz-filter"
   "Fogbugz filter list mode
@@ -142,13 +226,21 @@ sFilter ID."
 (define-key fogbugz-filter-list-mode-map (kbd "q") 'quit-window)
 (define-key fogbugz-filter-list-mode-map (kbd "n") 'next-line)
 (define-key fogbugz-filter-list-mode-map (kbd "p") 'previous-line)
-(define-key fogbugz-filter-list-mode-map (kbd "<RET>") 'fogbugz-set-filter-under-point)
+(define-key fogbugz-filter-list-mode-map (kbd "r") 'fogbugz-list-filters)
+(define-key fogbugz-filter-list-mode-map (kbd "c") 'fogbugz-set-filter-under-point)
+(define-key fogbugz-filter-list-mode-map (kbd "<RET>") 'fogbugz-select-filter-under-point)
 
+(define-derived-mode fogbugz-search-results-mode fundamental-mode "fbz-results"
+  "Fogbugz search results mode
+\\{fogbugz-search-results-mode-map}"
+  (read-only-mode 1)
+  (setq font-lock-defaults '(`(("^[0-9]+" . font-lock-function-name-face)
+                               ("^[a-zA-z0-9]+:" . font-lock-variable-name-face)))))
 
-(defvar temp-filter `(filter
-                      ((type . "saved")
-                       (sFilter . "10")
-                       (status . "current"))
-                      "Travis's Bugz"))
+(define-key fogbugz-search-results-mode-map (kbd "q") 'quit-window)
+(define-key fogbugz-search-results-mode-map (kbd "n") 'next-line)
+(define-key fogbugz-search-results-mode-map (kbd "p") 'previous-line)
+(define-key fogbugz-search-results-mode-map (kbd "w") 'fogbugz-work-on-case-under-point)
+(define-key fogbugz-search-results-mode-map (kbd "<RET>") (lambda () (interactive) (message "LOL")))
 
 (provide 'fogbugz)
