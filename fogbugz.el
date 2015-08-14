@@ -23,41 +23,44 @@
 (defun fogbugz-logon (&optional force-refresh)
   "Log in with `fogbugz-email' and `fogbugz-password'
   variables. Only perform request when `fogbugz-token' is nil, or
-  if FORCE-REFRESH is truthy. Request synchronously and store
+  if FORCE-REFRESH is true. Request synchronously and store
   token in `fogbugz-token'"
 
   (interactive)
   (if (or force-refresh
-            (not (boundp 'fogbugz-token))
-            (not fogbugz-token))
+          (not (boundp 'fogbugz-token))
+          (not fogbugz-token))
       (let* ((response (fogbugz-request
                         "logon"
                         `(("email" . ,fogbugz-email)
-                          ("password" . ,fogbugz-password))))
+                          ("password" . ,fogbugz-password))
+                        t))
              (token (fogbugz-parse-logon-response response)))
         (setq fogbugz-token token)
         token)
     fogbugz-token))
 
-(defun fogbugz-request (endpoint params)
+(defun fogbugz-request (endpoint &optional params &optional exclude-token)
   "Make a request to ENDPOINT, providing PARAMS (which can be
   nil) as POST data. Respond synchronously with parsed XML data
-  from `libxml-parse-xml-region'"
+  from `libxml-parse-xml-region'. Since most requests will need
+  to provide `fogbugz-token', automatically include that in
+  PARAMS unless EXCLUDE_TOKEN is true."
 
   (let ((url-request-method "POST")
         (url-request-extra-headers
          '(("Content-Type" . "application/x-www-form-urlencoded")))
 
         ;; POST data, form-encoded
-        (url-request-data
-         (if params
-             (mapconcat
-              (lambda (param-pair)
-                (concat (url-hexify-string (car param-pair)) "="
-                        (url-hexify-string (cdr param-pair))))
-              params
-              "&")
-           nil))
+        (url-request-data (let ((url-params (if exclude-token
+                                                params
+                                              (cons `("token" . ,fogbugz-token) params))))
+                            (mapconcat
+                             (lambda (param-pair)
+                               (concat (url-hexify-string (car param-pair)) "="
+                                       (url-hexify-string (cdr param-pair))))
+                             url-params
+                             "&")))
 
         (url (concat (fogbugz-base-uri endpoint))))
 
@@ -94,8 +97,7 @@
   (let ((filter-list
          (fogbugz-parse-list-filters-response
           (fogbugz-request
-           "listFilters"
-           `(("token" . ,fogbugz-token))))))
+           "listFilters"))))
 
     ;; store filter list in a variable for easy access
     (setq fogbugz-filter-list filter-list))
@@ -131,8 +133,7 @@ sFilter ID."
 (defun fogbugz-set-current-filter (s-filter)
   "Set S-FILTER (tring) as current filter in fogbugz."
 
-  (fogbugz-request "setCurrentFilter" `(("token" . ,fogbugz-token)
-                                        ("sFilter" . ,s-filter))))
+  (fogbugz-request "setCurrentFilter" `(("sFilter" . ,s-filter))))
 
 (defun fogbugz-search (&optional query column-names max)
   (interactive)
@@ -142,8 +143,7 @@ sFilter ID."
    (cdr
     (fogbugz-request
      "search"
-     `(("token" . ,fogbugz-token)
-       ("q" . ,(or query ""))
+     `(("q" . ,(or query ""))
        ("cols" . "sTitle,sPriority,sStatus,sProject,sLatestTextSummary")
        ("max" . "50"))))))
 
@@ -158,7 +158,7 @@ sFilter ID."
     (erase-buffer)
     (goto-char (point-min))
     (insert "* " description  " *\n\n")
-    (pp case-list)
+
     (loop for case in case-list do
           (let ((case-attrs (nth 1 case))
                 (remaining-fields (cdr (cdr case))))
@@ -192,7 +192,7 @@ sFilter ID."
                     (read-from-minibuffer "Bug: "))))
     (save-excursion
       (message "bug id %s" bug-id)
-      (pp (fogbugz-request "startWork" `(("ixBug" . ,bug-id) ("token" . ,fogbugz-token)))))))
+      (pp (fogbugz-request "startWork" `(("ixBug" . ,bug-id)))))))
 
 
 (defun fogbugz-work-on-case-under-point ()
@@ -207,7 +207,7 @@ sFilter ID."
 
 (defun fogbugz-stop-work ()
   (interactive)
-  )
+  (pp (fogbugz-request "stopWork")))
 
 (defun fogbugz-humanize-attribute-name (attribute-symbol)
   "Translates ATTRIBUTE-SYMBOL for human consumption:

@@ -52,7 +52,7 @@
       (mock (url-retrieve-synchronously "<mock url>") => xml-buffer)
       (mock (fogbugz-base-uri "endpoint-name") => "<mock url>")
       (should (equal
-               (fogbugz-request "endpoint-name" `(("param1" . "value1") ("param2" . "value2")))
+               (fogbugz-request "endpoint-name" `(("param1" . "value1") ("param2" . "value2")) t)
 
                ;; mock xml parsed into lisp object
                '(response nil (data nil "123")))))))
