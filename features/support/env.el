@@ -11,13 +11,15 @@
 
 (add-to-list 'load-path fogbugz-mode-root-path)
 
-(require 'fogbugz-mode)
+(require 'fogbugz)
 (require 'espuds)
 (require 'ert)
+(require 'el-mock)
 
 (Setup
- ;; Before anything has run
- )
+ (setq fogbugz-email "bob@bob.com")
+ (setq fogbugz-password "secret")
+ (setq fogbugz-domain "localhost:1234"))
 
 (Before
  ;; Before each scenario is run

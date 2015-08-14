@@ -78,8 +78,6 @@
           (kill-buffer)
           data)))
 
-;; (setq url-debug t)
-
 (defun fogbugz-parse-list-filters-response (response)
   "Turn raw RESPONSE into a list of filter lists."
   (cdr (cdr
@@ -114,6 +112,7 @@
         (insert (fogbugz-get-filter-name filter)) ;; insert filter name (string)
         (insert " - " (assoc-default 'sFilter (fogbugz-get-filter-attributes filter)))
         (insert "\n"))
+  (goto-char (point-min))
   (fogbugz-filter-list-mode))
 
 (defun fogbugz-set-filter-under-point ()
@@ -131,7 +130,7 @@ sFilter ID."
     (fogbugz-set-current-filter s-filter-to-activate)))
 
 (defun fogbugz-set-current-filter (s-filter)
-  "Set S-FILTER (tring) as current filter in fogbugz."
+  "Set S-FILTER (string) as current filter in fogbugz."
 
   (fogbugz-request "setCurrentFilter" `(("sFilter" . ,s-filter))))
 
@@ -172,7 +171,6 @@ sFilter ID."
   (goto-char (point-min)))
 
 (defun fogbugz-select-filter-under-point ()
-
   (interactive)
   (let* ((index (1- (line-number-at-pos)))
          (filter-to-activate (nth index fogbugz-filter-list))
@@ -241,6 +239,7 @@ E.g. (fogbugz-humanize-attribute-name 'ixBug) ;; => \"Bug\""
 (define-key fogbugz-search-results-mode-map (kbd "n") 'next-line)
 (define-key fogbugz-search-results-mode-map (kbd "p") 'previous-line)
 (define-key fogbugz-search-results-mode-map (kbd "w") 'fogbugz-work-on-case-under-point)
+(define-key fogbugz-search-results-mode-map (kbd "s") 'fogbugz-stop-work)
 (define-key fogbugz-search-results-mode-map (kbd "<RET>") (lambda () (interactive) (message "LOL")))
 
 (provide 'fogbugz)

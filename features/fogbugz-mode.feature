@@ -1,11 +1,12 @@
-Feature: Do Some things
-  In order to do something
+Feature: log on
+  In order to do log on
   As a user
-  I want to do something
 
-  Scenario: Do Something
-    Given I have "something"
-    When I have "something"
-    Then I should have "something"
-    And I should have "something"
-    But I should not have "something"
+  Scenario: log on
+    Given I start an action chain
+    And the mock is set for "logon"
+    And I press "M-x"
+    And I type "fogbugz-logon"
+    And I execute the action chain
+    And I inspect the variable fogbugz-token
+    Then I should see message "123"

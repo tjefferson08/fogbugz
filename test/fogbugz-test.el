@@ -2,6 +2,7 @@
 (require 'el-mock)
 (require 'cl)
 
+;; `fogbugz-base-uri'
 (ert-deftest fogbugz-base-uri-test ()
   (let ((fogbugz-domain "some-domain.com"))
     (should (equal
@@ -17,6 +18,7 @@
     (should-error
      (fogbugz-base-uri "some-method"))))
 
+;; `fogbugz-logon'
 (ert-deftest fogbugz-logon-request-test ()
   (with-mock
     (mock (fogbugz-request
@@ -38,7 +40,8 @@
     (let ((fogbugz-token "already-set"))
       (should (equal (fogbugz-logon) "already-set")))))
 
-(ert-deftest fogbugz-request-test ()
+;; `fogbugz-request'
+(ert-deftest fogbugz-request-exclude-token-test ()
   (with-mock
     (let ((xml-buffer (generate-new-buffer "mock-xml-buffer"))
 
