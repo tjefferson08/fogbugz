@@ -10,6 +10,23 @@
       (error "`fogbugz-domain' must be set to a valid hostname"))
   (concat "https://" fogbugz-domain "/api.asp?cmd=" method))
 
+(defun fogbugz-prompt-for-credentials ()
+  "Prompt for `fogbugz-domain', `fogbugz-email', and
+`fogbugz-password', respectively. There are many ways to set/bind
+these variables; feel free to skip this function and set them as
+you please."
+
+  (interactive)
+
+  (setq fogbugz-domain
+        (read-from-minibuffer "Fogbugz domain (e.g. some-company.fogbugz.com): "))
+
+  (setq fogbugz-email
+        (read-from-minibuffer "Fogbugz login email: "))
+
+  (setq fogbugz-password
+        (read-from-minibuffer "Fogbugz login password: ")))
+
 (defun fogbugz-refresh-token ()
   "Force a token refresh."
 

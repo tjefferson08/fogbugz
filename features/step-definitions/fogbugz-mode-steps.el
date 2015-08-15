@@ -8,33 +8,18 @@
 ;;       ))
 
 (And "the mock is set for \"\\(.+\\)\"$"
-     (lambda (function)
-       (defun url-retrieve-synchronously (callback)
-         (setq url-http-end-of-headers 13)
-         (switch-to-buffer (get-buffer-create "xml-mock"))
-         (insert "FAKE HEADERS<?xml version=\"1.0\" encoding=\"UTF-8\"?><response><token>123</token></response>")
-         (get-buffer "xml-mock"))))
+     (lambda (method)
 
-(And "I inspect the variable fogbugz-token"
-     (lambda ()
-       (message fogbugz-token)))
+       (cond
+        ((equal method "logon")
 
-(When "^I have \"\\(.+\\)\"$"
-  (lambda (something)
-    ;; ...
-    ))
+         ;; nuclear "mock", just redefine the whole dang function
+         (defun url-retrieve-synchronously (url)
+           (setq url-http-end-of-headers 13)
+           (switch-to-buffer (get-buffer-create "xml-mock"))
+           (insert "FAKE HEADERS<?xml version=\"1.0\" encoding=\"UTF-8\"?><response><token>123</token></response>")
+           (get-buffer "xml-mock"))))))
 
-(Then "^I should have \"\\(.+\\)\"$"
-  (lambda (something)
-    ;; ...
-    ))
-
-(And "^I have \"\\(.+\\)\"$"
-  (lambda (something)
-    ;; ...
-    ))
-
-(But "^I should not have \"\\(.+\\)\"$"
-  (lambda (something)
-    ;; ...
-    ))
+(And "I inspect the variable \"\\(.+\\)\"$"
+     (lambda (variable-name-string)
+       (message (symbol-value (intern variable-name-string)))))
