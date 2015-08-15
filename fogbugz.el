@@ -1,3 +1,5 @@
+(require 'cl)
+
 (defun fogbugz-base-uri (method)
   "Get the fogbugz web API URI for the provided method."
 
@@ -81,19 +83,21 @@ you please."
 
         (url (concat (fogbugz-base-uri endpoint))))
 
-        (message "URL: %s" url)
-        (switch-to-buffer (url-retrieve-synchronously url))
+    (message "URL: %s" url)
 
-        ;; special marker set by `url-retrieve-synchronously'
-        (goto-char url-http-end-of-headers)
+    (switch-to-buffer (url-retrieve-synchronously url))
 
-        ;; move past any blank lines
-        (while (looking-at "^\\s-*$")
-          (forward-line 1))
+    ;; special marker set by `url-retrieve-synchronously'
+    (goto-char url-http-end-of-headers)
 
-        (let ((data (libxml-parse-xml-region (point) (point-max))))
-          (kill-buffer)
-          data)))
+    ;; move past any blank lines
+    (while (looking-at "\\s-*$")
+      (forward-line 1)
+      (beginning-of-line))
+
+    (let ((data (libxml-parse-xml-region (point) (point-max))))
+      (kill-buffer)
+      data)))
 
 (defun fogbugz-parse-list-filters-response (response)
   "Turn raw RESPONSE into a list of filter lists."
