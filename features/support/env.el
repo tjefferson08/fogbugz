@@ -1,15 +1,15 @@
 (require 'f)
 
-(defvar fogbugz-mode-support-path
+(defvar fogbugz-support-path
   (f-dirname load-file-name))
 
-(defvar fogbugz-mode-features-path
-  (f-parent fogbugz-mode-support-path))
+(defvar fogbugz-features-path
+  (f-parent fogbugz-support-path))
 
-(defvar fogbugz-mode-root-path
-  (f-parent fogbugz-mode-features-path))
+(defvar fogbugz-root-path
+  (f-parent fogbugz-features-path))
 
-(add-to-list 'load-path fogbugz-mode-root-path)
+(add-to-list 'load-path fogbugz-root-path)
 
 (require 'fogbugz)
 (require 'espuds)
