@@ -83,7 +83,7 @@ you please."
 
         (url (concat (fogbugz-base-uri endpoint))))
 
-    (message "URL: %s" url)
+    (message "URL: %s\nDATA: %s" url url-request-data)
 
     (switch-to-buffer (url-retrieve-synchronously url))
 
@@ -101,8 +101,7 @@ you please."
 
 (defun fogbugz-parse-list-filters-response (response)
   "Turn raw RESPONSE into a list of filter lists."
-  (cdr (cdr
-        (car (cdr (cdr response))))))
+  (nthcdr 2 (car (nthcdr 2 response))))
 
 (defun fogbugz-get-filter-name (filter)
   (nth 2 filter))
@@ -230,12 +229,13 @@ sFilter ID."
 
 (defun fogbugz-humanize-attribute-name (attribute-symbol)
   "Translates ATTRIBUTE-SYMBOL for human consumption:
-E.g. (fogbugz-humanize-attribute-name 'ixBug) ;; => \"Bug\""
+E.g. (fogbugz-humanize-attribute-name 'ixBug) ;; => \"bug\""
 
   (let ((name (symbol-name attribute-symbol))
         (case-fold-search nil))
-    (substring name
-        (string-match "[A-Z]" name))))
+    (substring name (or
+                     (string-match "[A-Z]" name)
+                     0))))
 
 (define-derived-mode fogbugz-filter-list-mode fundamental-mode "fbz-filter"
   "Fogbugz filter list mode
