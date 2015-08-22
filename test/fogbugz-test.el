@@ -91,7 +91,28 @@
            (fogbugz-humanize-attribute-name 'lowercaseonly)
            "lowercaseonly")))
 
-(defun run-tests ()
-  (interactive)
-  (shell-command
-   "cd ~/fogbugz-mode && cask exec ert-runner -l ./fogbugz.el"))
+;; `fogbugz-get-case-number-under-point'
+(ert-deftest fogbugz-get-case-number-under-point-success ()
+  (with-temp-buffer
+    (insert "    1234: Some case")
+
+    (goto-char (point-min))
+    (should (equal
+             (fogbugz-get-case-number-under-point)
+             "1234"))
+
+    (end-of-line)
+    (should (equal
+             (fogbugz-get-case-number-under-point)
+             "1234"))))
+
+(ert-deftest fogbugz-get-case-number-under-point-fail ()
+  (with-temp-buffer
+    (insert " Something that doesn't match ")
+
+    (goto-char (point-min))
+    (should (null (fogbugz-get-case-number-under-point)))
+
+    (end-of-line)
+    (should (null (fogbugz-get-case-number-under-point)))))
+

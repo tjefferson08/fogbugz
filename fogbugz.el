@@ -209,6 +209,19 @@ sFilter ID."
     (fogbugz-list-search-results
      (fogbugz-search))))
 
+(defun fogbugz-get-case-number-under-point ()
+  "Check the beginning of the current line for something that
+looks like a numeric case number. Return it when it is found (nil
+otherwise)."
+
+  (save-excursion
+    (let* ((line (buffer-substring-no-properties (point-at-bol) (point-at-eol)))
+           (case-number
+            (if (null (string-match "^[ ]*\\([0-9]+\\)" line))
+                nil
+              (match-string 1 line))))
+      case-number)))
+
 (defun fogbugz-start-work-on-case (&optional ix-bug)
   "Beware: creates a new interval"
   (interactive)
