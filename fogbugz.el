@@ -186,8 +186,8 @@ sFilter ID."
     (insert "* " description  " *\n\n")
 
     (loop for case in case-list do
-          (let ((case-attrs (nth 1 case))
-                (remaining-fields (cdr (cdr case))))
+          (let ((case-attrs (fogbugz-get-case-attrs case))
+                (remaining-fields (fogbugz-get-remaining-case-fields case)))
 
             (insert (assoc-default 'ixBug case-attrs) "\n")
             (loop for field in remaining-fields do
@@ -243,6 +243,49 @@ otherwise)."
             line)))
       (fogbugz-start-work-on-case case-number))))
 
+(defun fogbugz-open-case-under-point (prefix)
+  (interactive "P")
+
+  (let ((case-number (fogbugz-get-case-number-under-point)))
+    (if case-number
+        (progn
+          (let ((buffer-name (concat "*fogbugz-case-" case-number "*")))
+            (if prefix
+                (switch-to-buffer-other-window buffer-name)
+              (switch-to-buffer buffer-name))
+            (fogbugz-show-case-details case-number)))
+      (message "Unable to parse case number on this line"))))
+
+(defun fogbugz-show-case-details (case-number)
+  (let ((case-data (assoc 'case
+                          (assoc-default 'cases (fogbugz-search case-number "sTitle,sPriority,events" "1"))))
+        (inhibit-read-only t))
+    (erase-buffer)
+    (fogbugz-insert-case-details case-data '(sTitle sPriority events)))
+  (fogbugz-case-details-mode))
+
+(defun fogbugz-insert-case-details (case-data attr-names)
+
+  ;; bug ID is in case attrs
+  (insert (assoc-default 'ixBug (fogbugz-get-case-attrs case-data)) "\n")
+
+  (loop for attr-name in attr-names do
+        (let ((attr-name-string (fogbugz-humanize-attribute-name attr-name))
+              (remaining-fields (fogbugz-get-remaining-case-fields case-data)))
+
+          ;; some case attrs need special handling
+          (cond
+           ((eq attr-name 'events)
+            (let ((events-list (nthcdr 2 (assoc 'events remaining-fields))))
+              (insert "Events:\n")
+              (loop for event in events-list do
+                    (let ((description (nth 2 (assoc 'evtDescription event))))
+                      (insert "  " description "\n")))))
+
+           ;; catch-all
+           (t
+            (insert attr-name-string ": " (nth 2 (assoc attr-name remaining-fields)) "\n"))))))
+
 (defun fogbugz-stop-work ()
   (interactive)
   (pp (fogbugz-request "stopWork")))
@@ -267,7 +310,7 @@ E.g. (fogbugz-humanize-attribute-name 'ixBug) ;; => \"bug\""
 (define-key fogbugz-filter-list-mode-map (kbd "p") 'previous-line)
 (define-key fogbugz-filter-list-mode-map (kbd "r") 'fogbugz-list-filters)
 (define-key fogbugz-filter-list-mode-map (kbd "c") 'fogbugz-set-filter-under-point)
-(define-key fogbugz-filter-list-mode-map (kbd "<RET>") 'fogbugz-select-filter-under-point)
+(define-key fogbugz-filter-list-mode-map (kbd "RET") 'fogbugz-select-filter-under-point)
 
 (define-derived-mode fogbugz-search-results-mode fundamental-mode "fbz-results"
   "Fogbugz search results mode
@@ -281,6 +324,10 @@ E.g. (fogbugz-humanize-attribute-name 'ixBug) ;; => \"bug\""
 (define-key fogbugz-search-results-mode-map (kbd "p") 'previous-line)
 (define-key fogbugz-search-results-mode-map (kbd "w") 'fogbugz-work-on-case-under-point)
 (define-key fogbugz-search-results-mode-map (kbd "s") 'fogbugz-stop-work)
-(define-key fogbugz-search-results-mode-map (kbd "<RET>") (lambda () (interactive) (message "LOL")))
+(define-key fogbugz-search-results-mode-map (kbd "RET") 'fogbugz-open-case-under-point)
+
+(define-derived-mode fogbugz-case-details-mode fogbugz-search-results-mode "fbz-case"
+  "Fogbugz case details mode
+\\{fogbugz-case-details-mode-map}")
 
 (provide 'fogbugz)
