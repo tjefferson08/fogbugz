@@ -59,7 +59,7 @@ you please."
         token)
     fogbugz-token))
 
-(defun fogbugz-request (endpoint &optional params &optional exclude-token)
+(defun fogbugz-request (endpoint &optional params exclude-token)
   "Make a request to ENDPOINT, providing PARAMS (which can be
   nil) as POST data. Respond synchronously with parsed XML data
   from `libxml-parse-xml-region'. Since most requests will need
