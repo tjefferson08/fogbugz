@@ -1,7 +1,3 @@
-(require 'fogbugz)
-(require 'el-mock)
-(require 'cl)
-
 ;; `fogbugz-base-uri'
 (ert-deftest fogbugz-base-uri-test ()
   (let ((fogbugz-domain "some-domain.com"))
@@ -59,6 +55,30 @@
 
                ;; mock xml parsed into lisp object
                '(response nil (data nil "123")))))))
+;; `fogbugz-search'
+(ert-deftest fogbugz-search-no-params ()
+  (with-mock
+   (mock (fogbugz-request
+          "search"
+          '(("q" . "")
+            ("cols" . "sTitle,sPriority,sStatus,sProject,sLatestTextSummary")
+            ("max" . "50")))
+         => '(response nil (data1 "data1") (data2 "data2")))
+
+   (should (equal
+            (fogbugz-search)
+            '((data1 "data1") (data2 "data2"))))))
+
+(ert-deftest fogbugz-search-all-params ()
+  (with-mock
+   (mock (fogbugz-request
+          "search"
+          '(("q" . "query") ("cols" . "columns") ("max" . "42")))
+         => '(response nil (data1 "data1") (data2 "data2")))
+
+   (should (equal
+            (fogbugz-search "query" "columns" "42")
+            '((data1 "data1") (data2 "data2"))))))
 
 ;; `fogbugz-humanize-attribute-name'
 (ert-deftest fogbugz-humanize-attribute-name-test ()

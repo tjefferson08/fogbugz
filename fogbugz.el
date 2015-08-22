@@ -156,15 +156,22 @@ sFilter ID."
 
 (defun fogbugz-search (&optional query column-names max)
   (interactive)
+  (let ((column-string (or column-names "sTitle,sPriority,sStatus,sProject,sLatestTextSummary"))
+        (query-string (or query ""))
+        (max-string (or max "50")))
 
-  ;; parse off top-level <response> tag
-  (cdr
-   (cdr
-    (fogbugz-request
-     "search"
-     `(("q" . ,(or query ""))
-       ("cols" . "sTitle,sPriority,sStatus,sProject,sLatestTextSummary")
-       ("max" . "50"))))))
+    ;; parse off top-level <response> tag
+    (nthcdr 2 (fogbugz-request
+               "search"
+               `(("q" . ,query-string)
+                 ("cols" . ,column-string)
+                 ("max" . ,max-string))))))
+
+(defun fogbugz-get-case-attrs (case)
+  (nth 1 case))
+
+(defun fogbugz-get-remaining-case-fields (case)
+  (nthcdr 2 case))
 
 (defun fogbugz-list-search-results (search-results &optional results-buffer)
   (let ((target-buffer (or

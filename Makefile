@@ -1,7 +1,7 @@
 .PHONY: unit feature test
 
 unit:
-	cask exec ert-runner -l fogbugz.el
+	cask exec ert-runner
 
 feature:
 	cask exec ecukes
