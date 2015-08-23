@@ -7,7 +7,7 @@ Feature: log on
     And I type "fogbugz-logon"
     And I execute the action chain
     And I inspect the variable "fogbugz-token"
-    Then I should see message "123"
+    Then I should see pattern "fogbugz-token's value is \"123\""
 
 Feature: list filters
 
