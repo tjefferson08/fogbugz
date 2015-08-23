@@ -4,7 +4,7 @@ unit:
 	cask exec ert-runner
 
 feature:
-	cask exec ecukes
+	cask exec ecukes --reporter magnars
 
 test: unit feature
 

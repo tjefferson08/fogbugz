@@ -49,7 +49,6 @@
 
 (Given "the mock is set for \"\\(.+\\)\"$"
      (lambda (method)
-
        (cond
         ((equal method "logon")
 
@@ -104,4 +103,7 @@
 
 (And "I inspect the variable \"\\(.+\\)\"$"
      (lambda (variable-name-string)
-       (message (symbol-value (intern variable-name-string)))))
+       (shut-up
+         (describe-variable (intern variable-name-string))
+         (switch-to-buffer "*Help*"))))
+

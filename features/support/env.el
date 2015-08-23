@@ -15,6 +15,7 @@
 (require 'espuds)
 (require 'ert)
 (require 'el-mock)
+(require 'shut-up)
 
 (Setup
  (setq fogbugz-email "bob@bob.com")
