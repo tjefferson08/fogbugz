@@ -286,6 +286,21 @@ otherwise)."
            (t
             (insert attr-name-string ": " (nth 2 (assoc attr-name remaining-fields)) "\n"))))))
 
+(defun fogbugz-open-case-in-browser ()
+  "Infer the case from buffer contents, then visit the case page
+via `browse-url'. If the case number can't be found, open up the
+root fogbugz URL."
+
+  (interactive)
+  (let ((case-number (save-excursion
+                       (beginning-of-buffer)
+                       (fogbugz-get-case-number-under-point))))
+    (browse-url
+     (concat "https://" fogbugz-domain
+             (if case-number
+                 (concat "/f/cases/" case-number)
+               "")))))
+
 (defun fogbugz-stop-work ()
   (interactive)
   (pp (fogbugz-request "stopWork")))
@@ -329,5 +344,6 @@ E.g. (fogbugz-humanize-attribute-name 'ixBug) ;; => \"bug\""
 (define-derived-mode fogbugz-case-details-mode fogbugz-search-results-mode "fbz-case"
   "Fogbugz case details mode
 \\{fogbugz-case-details-mode-map}")
+(define-key fogbugz-search-results-mode-map (kbd "&") 'fogbugz-open-case-in-browser)
 
 (provide 'fogbugz)
