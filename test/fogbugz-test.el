@@ -14,6 +14,20 @@
     (should-error
      (fogbugz-base-uri "some-method"))))
 
+;; `fogbugz-refresh-token'
+(ert-deftest fogbugz-refresh-token-test ()
+
+  (with-mock
+   (mock (fogbugz-logon t) => "RET")
+
+   (should (equal (fogbugz-refresh-token) "RET"))))
+
+;; `fogbugz-parse-logon-response'
+(ert-deftest fogbguz-parse-logon-response-test ()
+  (should
+   (equal (fogbugz-parse-logon-response '(response nil (token nil "TOKEN_VALUE")))
+	  "TOKEN_VALUE")))
+
 ;; `fogbugz-logon'
 (ert-deftest fogbugz-logon-request-test ()
   (with-mock
@@ -140,5 +154,4 @@
                "Don't forget to fire the intern")
        (goto-char (/ (point-max) 2)) ;; somewhere in the middle
        (should (equal (fogbugz-open-case-in-browser) "case not found"))))))
-
 
