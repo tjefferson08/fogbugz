@@ -155,3 +155,12 @@
        (goto-char (/ (point-max) 2)) ;; somewhere in the middle
        (should (equal (fogbugz-open-case-in-browser) "case not found"))))))
 
+(add-hook 'ert-runner-reporter-run-ended-functions
+      (lambda (&optional one two)
+	(let ((file "/Users/travis/fogbugz/fogbugz.el"))
+	  (find-file file)
+
+	  ;; hack together a basic coverage report
+	  (let ((line-count (count-lines (point-min) (point-max))))
+	    (loop for i from 1 upto line-count do
+		  (message "%s: %s" i (gethash i (undercover--file-coverage-statistics))))))))

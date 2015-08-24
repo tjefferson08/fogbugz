@@ -2,6 +2,7 @@
 (require 'cl)
 
 (when (require 'undercover nil t)
+  (setq undercover-force-coverage t)
   (undercover "*.el" (:report-file "local-report.json") (:send-report nil)))
 (require 'fogbugz)
 
